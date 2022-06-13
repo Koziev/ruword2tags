@@ -6,9 +6,9 @@
 26-10-2019 - переход на хранение части словарной базы в SQLite3
 
 17-06-2020 refs #1 возникает ошибка при работе из нескольких тредов, добавил check_same_thread=False
-"""
 
-from __future__ import print_function
+13.06.2022 если файла БД ruword2tags.db нет, скачаем его и оставим в домашнем каталоге пользователя
+"""
 
 import gzip
 import pathlib
@@ -87,6 +87,20 @@ class RuWord2Tags:
             self.db_filepath = os.path.join(module_folder, '../output', 'ruword2tags.db')
             if not os.path.exists(self.db_filepath):
                 self.db_filepath = os.path.join(module_folder, 'ruword2tags.db')
+
+                # 13.06.2022 если файла БД нет, скачаем его и оставим в домашнем каталоге пользователя
+                if not os.path.exists(self.db_filepath):
+                    rcpath = os.path.expanduser('~/.ruword2tags')
+                    self.db_filepath = os.path.join(rcpath, 'ruword2tags.db')
+                    if not os.path.exists(self.db_filepath):
+                        if not os.path.exists(rcpath):
+                            os.mkdir(rcpath)
+                        #response = requests.get('https://drive.google.com/file/d/1xlL8ijnwE6tAPpsil7Q1yWkXY4mn2YCd/view?usp=sharing')
+                        #open(self.db_filepath, "wb").write(response.content)
+                        import gdown
+
+                        url = 'https://drive.google.com/uc?id=1xlL8ijnwE6tAPpsil7Q1yWkXY4mn2YCd'
+                        gdown.download(url, self.db_filepath, quiet=False)
         else:
             p = dict_path
             self.db_filepath = os.path.join(os.path.dirname(dict_path), 'ruword2tags.db')
@@ -100,7 +114,6 @@ class RuWord2Tags:
 
         self.cnx.isolation_level = None
         self.cur = self.cnx.cursor()
-
 
         with open(p, 'rb') as f:
             data = pickle.load(f)
